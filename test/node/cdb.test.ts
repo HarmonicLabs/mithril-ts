@@ -24,7 +24,7 @@ import {
     zstdCompress,
     zstdDecompress,
 } from "../../src/node";
-import { bytes, FIXTURES, writeTrio } from "./helpers";
+import { bytes, FIXTURES, routeFetch, writeTrio } from "./helpers";
 import { buildSyntheticChain, testAncillaryKey, type SyntheticChain } from "./syntheticChain";
 
 describe("cardano-database v2 artifacts", () => {
@@ -125,7 +125,7 @@ describe("cardano-database v2 artifacts", () => {
         let src: string;
         let store: ArtifactStore;
         let chain: SyntheticChain;
-        let server: ReturnType<typeof Bun.serve>;
+        let server: ReturnType<typeof routeFetch>;
         let merkleRoot: string;
         const anc = testAncillaryKey();
         let ancillaryArchive: Uint8Array<ArrayBuffer>;
@@ -169,10 +169,7 @@ describe("cardano-database v2 artifacts", () => {
 
             const handler = createMithrilArtifactHandler({ store });
             const ancHandler = createMithrilArtifactHandler({ store, prefix: "/with-ancillary" });
-            server = Bun.serve({
-                port: 0,
-                hostname: "127.0.0.1",
-                fetch: async (req) => {
+            server = routeFetch(async (req) => {
                     const url = new URL(req.url);
                     if (url.pathname === "/files/ancillary.tar.zst") return new Response(ancillaryArchive);
                     const res = (await handler(req, url)) ?? (await ancHandler(req, url));
@@ -184,14 +181,13 @@ describe("cardano-database v2 artifacts", () => {
                         return Response.json(j);
                     }
                     return res;
-                },
             });
         });
         afterAll(() => {
-            server?.stop(true);
+            server?.stop();
             rmSync(root, { recursive: true, force: true });
         });
-        const base = () => `http://127.0.0.1:${server.port}/mithril`;
+        const base = () => `${server.origin}/mithril`;
 
         test("producing a root the certificate did not sign is refused", async () => {
             const other = buildSyntheticChain({ signedEntityType: { CardanoDatabase: { epoch: 10, immutable_file_number: 2 } }, messageParts: { cardano_database_merkle_root: "00".repeat(32) } });
@@ -251,13 +247,13 @@ describe("cardano-database v2 artifacts", () => {
 
         test("a restore with the ancillary archive: the last trio is covered by its signed manifest", async () => {
             const dl = join(root, "dl-anc");
-            const r = await restoreCardanoDatabase({ network: "preview", aggregator: `http://127.0.0.1:${server.port}/with-ancillary`, genesisVkey: chain.genesisVkeyHex, downloadDir: dl, includeAncillary: true, ancillaryVkey: anc.vkeyHex });
+            const r = await restoreCardanoDatabase({ network: "preview", aggregator: `${server.origin}/with-ancillary`, genesisVkey: chain.genesisVkeyHex, downloadDir: dl, includeAncillary: true, ancillaryVkey: anc.vkeyHex });
             expect(r.ancillary?.verification.ok).toBe(true);
             expect(r.ancillary?.ledgerDir).toBe(join(dl, "ledger"));
             expect(r.verification.checked).toBe(12);
             expect(r.verification.nonVerifiable).toEqual([]);
             // Another key: the manifest signature fails and the restore stops.
-            await expect(restoreCardanoDatabase({ network: "preview", aggregator: `http://127.0.0.1:${server.port}/with-ancillary`, genesisVkey: chain.genesisVkeyHex, downloadDir: join(root, "dl-anc2"), includeAncillary: true, ancillaryVkey: testAncillaryKey(12).vkeyHex })).rejects.toThrow(/ancillary verification failed/);
+            await expect(restoreCardanoDatabase({ network: "preview", aggregator: `${server.origin}/with-ancillary`, genesisVkey: chain.genesisVkeyHex, downloadDir: join(root, "dl-anc2"), includeAncillary: true, ancillaryVkey: testAncillaryKey(12).vkeyHex })).rejects.toThrow(/ancillary verification failed/);
         });
 
         test("a stale trio left in a resumed download dir is fetched again", async () => {

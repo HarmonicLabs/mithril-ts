@@ -24,3 +24,17 @@ export function writeTrio(dir: string, n: number): void {
 }
 
 export const FIXTURES = join(import.meta.dir, "..", "fixtures", "cdb");
+
+/**
+ * Serve `origin` from a handler in-process: `fetch` calls to it never open a socket (some CI sandboxes refuse even
+ * loopback connections), every other URL goes to the real `fetch`. `stop()` puts the real `fetch` back.
+ */
+export function routeFetch(handler: (req: Request) => Response | Promise<Response>, origin = "http://mithril-ts.test"): { origin: string; stop(): void } {
+    const real = globalThis.fetch;
+    const routed = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
+        const req = new Request(input, init);
+        return new URL(req.url).origin === origin ? handler(req) : real(input, init);
+    };
+    globalThis.fetch = Object.assign(routed, real) as typeof fetch;
+    return { origin, stop: () => void (globalThis.fetch = real) };
+}

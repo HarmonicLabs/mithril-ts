@@ -26,7 +26,7 @@ import {
     zstdCompress,
     type CardanoDatabaseSnapshotMessage,
 } from "../../src/node";
-import { bytes, FIXTURES } from "./helpers";
+import { bytes, FIXTURES, routeFetch } from "./helpers";
 import { testAncillaryKey } from "./syntheticChain";
 
 const enc = new TextEncoder();
@@ -104,9 +104,9 @@ describe("tar.zst extraction", () => {
     });
 });
 
-describe("HTTP downloads (local server)", () => {
+describe("HTTP downloads (in-process server)", () => {
     let dir: string;
-    let server: ReturnType<typeof Bun.serve>;
+    let server: ReturnType<typeof routeFetch>;
     const requests: string[] = [];
     const anc = testAncillaryKey();
     let ancillaryFiles: TarEntry[];
@@ -139,10 +139,7 @@ describe("HTTP downloads (local server)", () => {
         for (const f of ancillaryFiles) data[f.name] = sha256hex(f.data);
         const manifest = { data, signature: anc.sign(ancillaryManifestHash({ data, signature: null })) };
         ancillaryArchive = tarZst([...ancillaryFiles, { name: "ancillary_manifest.json", data: enc.encode(JSON.stringify(manifest)) }]);
-        server = Bun.serve({
-            port: 0,
-            hostname: "127.0.0.1",
-            fetch: (req) => {
+        server = routeFetch((req) => {
                 const p = new URL(req.url).pathname;
                 requests.push(p);
                 if (p === "/immutable/00100.tar.zst") return new Response(new Uint8Array(fixture));
@@ -152,12 +149,11 @@ describe("HTTP downloads (local server)", () => {
                 if (p === "/ancillary.tar.zst") return new Response(ancillaryArchive);
                 if (p === "/digests.tar.zst") return new Response(tarZst([{ name: "x.digests.json", data: new Uint8Array(readFileSync(join(FIXTURES, "00100.digests.json"))) }]));
                 return new Response("missing", { status: 404 });
-            },
         });
-        base = `http://127.0.0.1:${server.port}`;
+        base = server.origin;
     });
     afterAll(() => {
-        server?.stop(true);
+        server?.stop();
         rmSync(dir, { recursive: true, force: true });
     });
 

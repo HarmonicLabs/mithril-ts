@@ -1,6 +1,6 @@
 {
   "name": "@harmoniclabs/mithril-ts",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mithril in pure TypeScript: certificate chains, cardano-database, stake distribution and transaction proofs, snapshot download, production and serving. Browsers, Bun and Node.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,7 +15,10 @@
       "default": "./dist/node/index.js"
     }
   },
-  "files": ["dist", "CHANGELOG.md"],
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=22.15.0"
   },
@@ -47,5 +50,12 @@
     "@types/node": "^26.6.5",
     "typescript": "^5.9.3"
   },
-  "keywords": ["cardano", "mithril", "stm", "bls12-381", "certificate", "snapshot"]
+  "keywords": [
+    "cardano",
+    "mithril",
+    "stm",
+    "bls12-381",
+    "certificate",
+    "snapshot"
+  ]
 }

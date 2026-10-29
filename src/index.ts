@@ -26,10 +26,16 @@ export {
     cardanoDatabaseMessageMatches,
     CertificateError,
     computeCertificateHash,
+    decodeKeyBytes,
+    metadataHash,
     parseCertificate,
+    phiFFixed,
     protocolMessageHash,
     protocolParametersHash,
+    PROTOCOL_MESSAGE_PART_KEYS,
+    rfc3339Nanos,
     type Certificate,
+    type CertificateMetadata,
     type ProtocolMessage,
     type SignedEntityType,
 } from "./certificate";
@@ -44,8 +50,25 @@ export {
     type ChainVerifyOptions,
     type ChainVerifyResult,
 } from "./verifier";
-export { StmVerificationError, verifyConcatenationProof, type AggregateVerificationKey, type ConcatenationProof, type StmParameters, type StmVerifyStats } from "./stm";
-export { cardanoDatabaseMerkleRoot, cardanoDatabaseSnapshotHash, certifiedDigests, digestsFileStem, immutableFileNumber, MkTree, mkTreeRoot, type ImmutableFileDigest } from "./mkTree";
+export {
+    aggregateVerificationKeyJson,
+    avkEquals,
+    concatenationProofJson,
+    evaluateDenseMapping,
+    parseAggregateVerificationKey,
+    parseAggregateVerificationKeyJson,
+    parseConcatenationProof,
+    registrationLeafBytes,
+    StmVerificationError,
+    verifyBatchPath,
+    verifyConcatenationProof,
+    type AggregateVerificationKey,
+    type ConcatenationProof,
+    type StmParameters,
+    type StmSignatureEntry,
+    type StmVerifyStats,
+} from "./stm";
+export { cardanoDatabaseMerkleRoot, cardanoDatabaseSnapshotHash, certifiedDigests, digestsFileStem, immutableFileNumber, MkTree, MKTREE_GOLDEN_LEAVES, MKTREE_GOLDEN_ROOT_HEX, mkTreeRoot, type ImmutableFileDigest } from "./mkTree";
 export { blake2s, blake2s256, Blake2s } from "./blake2s";
 export { ed25519VerifyStrict } from "./ed25519";
 export { mithrilStake, parseStakeArtifact, poolIdHex, stakeDistributionMerkleRoot, stakeMessageMatches, STAKE_SNAPSHOT_OFFSET, type CertifiedStake, type MithrilStakeOptions, type StakeArtifact } from "./stake";
@@ -56,4 +79,4 @@ export { buildTar, readTar, TarStreamReader, type TarEntry, type TarStreamEvents
 export { decodePrimary, decodeSecondaryEntry, filledRelativeSlots, lastBlockOfChunk, SECONDARY_ENTRY_SIZE, type SecondaryEntry } from "./chunkIndex";
 export { bytesEqual, bytesToHex, concatBytes, hexToBytes, utf8 } from "./bytes";
 export { sha256, sha256Async, sha256Hasher, type Hasher } from "./hash";
-export { parseJsonLossless, stringifyJsonLossless } from "./json";
+export { asByteArray, asU64, byteArrayJson, decodeJsonHex, encodeJsonHex, isObject, parseJsonLossless, stringifyJsonLossless } from "./json";
